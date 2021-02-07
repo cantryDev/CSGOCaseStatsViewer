@@ -97,7 +97,7 @@ public class Analyser {
                                 }
                             }
                         }
-                        if (unusual && itemRarity.equals("Rarity_Legendary_Weapon")) {
+                        if (unusual && itemRarity.equals("Rarity_Ancient_Weapon")) {
                             itemRarity = "Yellow";
                         }
 
@@ -113,6 +113,9 @@ public class Analyser {
                                 break;
                             case "Rarity_Ancient_Weapon":
                                 itemRarity = "Red";
+                                break;
+                            case "Rarity_Ancient":
+                                itemRarity = "Yellow";
                                 break;
                         }
 
@@ -163,7 +166,7 @@ public class Analyser {
 
 
         logToConsoleAndFile("");
-        logToConsoleAndFile("Item distribution and odds calulation");
+        logToConsoleAndFile("Item distribution and odds calculation");
         logToConsoleAndFile("Rarity name | Yours | Official");
         logToConsoleAndFile("-------------------------------------");
 
