@@ -2,8 +2,8 @@
 
 ## How does it work?
 
-This Java Application loads your whole CS:GO <a href=https://steamcommunity.com/my/inventoryhistory>inventory history</a> by emulation the view more button.
-To avoid rate limiting it loads 50 transactions per ~2.5 seconds. Which mean if you have a large history it will take longer to load.
+This Java Application loads your whole CS:GO <a href=https://steamcommunity.com/my/inventoryhistory>inventory history</a> by emulating the load more history button.
+To avoid rate limiting it loads 50 transactions (1 Http request) per ~2.5 seconds. Which mean if you have a large history it will take longer to load.
 After the inventory history is dumped it will search for every unboxed case.
 
 ## Usage
