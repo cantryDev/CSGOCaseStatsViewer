@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toMap;
 public class Analyser {
 
     private final HashMap<String, Double> officialOdds = new LinkedHashMap<>();
+    private File resultFile;
 
     public Analyser() {
         officialOdds.put("Blue", 79.92);
@@ -193,11 +194,14 @@ public class Analyser {
     }
 
     private File getCurrentResultFile() {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd_MM_yyyy_HH_mm");
-        Date dt = new Date();
-        String date = sdf.format(dt);
+        if (resultFile == null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd_MM_yyyy_HH_mm");
+            Date dt = new Date();
+            String date = sdf.format(dt);
 
-        return new File("result_" + date + ".txt");
+            resultFile = new File("result_" + date + ".txt");
+        }
+        return resultFile;
     }
 
     private double round(double value, int places) {

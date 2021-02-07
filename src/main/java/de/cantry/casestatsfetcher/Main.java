@@ -1,7 +1,5 @@
 package de.cantry.casestatsfetcher;
 
-import javax.sound.midi.Soundbank;
-import java.lang.instrument.ClassDefinition;
 import java.util.Scanner;
 
 public class Main {
@@ -22,7 +20,7 @@ public class Main {
             case 1:
                 System.out.println("Why does it need your cookies?");
                 System.out.println("It needs your cookies to request your inventory history from steamcommunity.com/my/inventoryhistory");
-                System.out.println("If you dont know how to get your cookies check the readme for instructions");
+                System.out.println("If you dont know how to get your cookies check https://github.com/cantryDev/CSGOCaseStatsViewer for instructions");
                 System.out.println("Please paste your cookies and press enter");
                 String cookies = scanner.nextLine();
                 if (!cookies.startsWith("Cookies:")) {
@@ -33,8 +31,8 @@ public class Main {
                 boolean startFromNow = false;
                 if(latestDump != 99999999999L){
                     System.out.println("Older dumps found");
-                    System.out.println("1. -> Continue from old dumps");
-                    System.out.println("2. -> Start from the beginning");
+                    System.out.println("1. -> Continue from old dumps till it reaches the end");
+                    System.out.println("2. -> Start from the beginning till it reaches the old dumps");
                     System.out.println("Type 1 or 2 and press enter.");
                     if (Integer.parseInt(scanner.nextLine()) == 2) {
                         latestDump = 99999999999L;

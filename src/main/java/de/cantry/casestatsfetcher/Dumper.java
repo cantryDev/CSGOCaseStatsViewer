@@ -2,11 +2,9 @@ package de.cantry.casestatsfetcher;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.sun.javafx.image.impl.ByteIndexed;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
