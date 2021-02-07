@@ -36,7 +36,7 @@ It needs your cookies to request your <a href=https://steamcommunity.com/my/inve
 2. Press F12 or right click(anywhere on the website) and press inspect element. 
 3. Select the network tab
 4. Reload the page
-5. Go back to the network tab and scroll to the top and select the first entry. On the right side it should say Request Url: Your steam profile url
+5. Go back to the network tab and scroll to the top and select the first entry. Click on headers. On the right side it should say Request Url: Your steam profile url
 6. Scroll down on the right side till you see Cookie:
 7. Right click on Cookie: and select copy value
 
