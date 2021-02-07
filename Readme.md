@@ -7,14 +7,14 @@ After the inventory history is dumped it will search for every unboxed case.
 
 <h2>Usage</h2>
 
-1. Download the latest compiled version via the <a href=>release tab</a> or compile it yourself with maven.
+1. Download the latest compiled version via the <a href=https://github.com/cantryDev/CSGOCaseStatsViewer/files/5939123/CSGOCaseStatsViewer-Release1.0.0.zip>latest release</a> or compile it yourself with maven.
 2. Execute the execute.bat 
 3. Follow the steps in the commandline which just got opened
 4. Get disappointed.
 
 <h2>Example result</h2>
 
-<a href=ad>click</a>
+<a href=https://github.com/cantryDev/CSGOCaseStatsViewer/blob/master/result_07_02_2021_14_54.txt>click</a>
 
 <h2>Requirements</h2>
 - Java 8 or higher
