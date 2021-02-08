@@ -41,100 +41,107 @@ public class Analyser {
         logToConsoleAndFile("Sorted by time");
 
         for (File f : Objects.requireNonNull(path.listFiles())) {
-            JsonObject obj = gson.fromJson(String.join("", Files.readAllLines(f.toPath())), JsonObject.class);
-            String currentDumpHTML = obj.get("html").getAsString();
-            HashMap<String, JsonObject> itemNames = new HashMap<>();
-            JsonObject descriptions = obj.get("descriptions").getAsJsonObject();
+            //Not pretty but better then nullchecking every field
+            try{
+                JsonObject obj = gson.fromJson(String.join("", Files.readAllLines(f.toPath())), JsonObject.class);
+                String currentDumpHTML = obj.get("html").getAsString();
+                HashMap<String, JsonObject> itemNames = new HashMap<>();
+                JsonObject descriptions = obj.get("descriptions").getAsJsonObject();
 
-            for (Map.Entry<String, JsonElement> description : descriptions.get("730").getAsJsonObject().entrySet()) {
-                itemNames.put(description.getKey(), description.getValue().getAsJsonObject());
-            }
-
-            String[] rows = currentDumpHTML.split("tradehistoryrow");
-
-            for (int i = 1; i < rows.length; i++) {
-                String row = rows[i];
-                List<String> appids = regexFindAll("data-appid=\"([^\"]+)\"", row);
-                boolean isCSGORow = true;
-                for (String appid : appids) {
-                    if (!appid.equals("730")) {
-                        isCSGORow = false;
-                        break;
-                    }
+                for (Map.Entry<String, JsonElement> description : descriptions.get("730").getAsJsonObject().entrySet()) {
+                    itemNames.put(description.getKey(), description.getValue().getAsJsonObject());
                 }
-                if (!isCSGORow) {
-                    continue;
-                }
-                List<String> classids = regexFindAll("data-classid=\"([^\"]+)\"", row);
-                List<String> instances = regexFindAll("data-instanceid=\"([^\"]+)\"", row);
-                if (classids.size() == 3 && instances.size() == 3) {
-                    String caseId = classids.get(0) + "_" + instances.get(0);
-                    String keyId = classids.get(1) + "_" + instances.get(1);
-                    String itemId = classids.get(2) + "_" + instances.get(2);
-                    String caseName = itemNames.get(caseId).get("market_hash_name").getAsString();
-                    String itemName = itemNames.get(itemId).get("market_hash_name").getAsString();
-                    String keyName = itemNames.get(keyId).get("market_hash_name").getAsString();
-                    if (keyName.toLowerCase().contains("case key") && caseName.toLowerCase().contains("case") && !caseName.toLowerCase().contains("key")) {
-                        String assetidFromItemId;
 
-                        try {
-                            assetidFromItemId = regexFindFirst("inventory/#730_2_([0-9]+)\"", row);
-                        } catch (Exception e) {
-                            logToConsoleAndFile("No assetid for " + itemName + " found");
-                            e.printStackTrace();
-                            continue;
+                String[] rows = currentDumpHTML.split("tradehistoryrow");
+
+                for (int i = 1; i < rows.length; i++) {
+                    String row = rows[i];
+                    List<String> appids = regexFindAll("data-appid=\"([^\"]+)\"", row);
+                    boolean isCSGORow = true;
+                    for (String appid : appids) {
+                        if (!appid.equals("730")) {
+                            isCSGORow = false;
+                            break;
                         }
+                    }
+                    if (!isCSGORow) {
+                        continue;
+                    }
+                    List<String> classids = regexFindAll("data-classid=\"([^\"]+)\"", row);
+                    List<String> instances = regexFindAll("data-instanceid=\"([^\"]+)\"", row);
+                    if (classids.size() == 3 && instances.size() == 3) {
+                        String caseId = classids.get(0) + "_" + instances.get(0);
+                        String keyId = classids.get(1) + "_" + instances.get(1);
+                        String itemId = classids.get(2) + "_" + instances.get(2);
+                        String caseName = itemNames.get(caseId).get("market_hash_name").getAsString();
+                        String itemName = itemNames.get(itemId).get("market_hash_name").getAsString();
+                        String keyName = itemNames.get(keyId).get("market_hash_name").getAsString();
+                        if (keyName.toLowerCase().contains("case key") && caseName.toLowerCase().contains("case") && !caseName.toLowerCase().contains("key")) {
+                            String assetidFromItemId;
 
-                        String itemRarity = "";
-                        boolean unusual = false;
-                        for (JsonElement element : itemNames.get(itemId).get("tags").getAsJsonArray()) {
-                            JsonObject object = element.getAsJsonObject();
-                            if (object.get("category").getAsString().equals("Rarity")) {
-                                itemRarity = object.get("internal_name").getAsString();
-                            } else if (object.get("category").getAsString().equals("Quality")) {
-                                if (object.get("internal_name").getAsString().equals("unusual")) {
-                                    unusual = true;
+                            try {
+                                assetidFromItemId = regexFindFirst("inventory/#730_2_([0-9]+)\"", row);
+                            } catch (Exception e) {
+                                logToConsoleAndFile("No assetid for " + itemName + " found");
+                                e.printStackTrace();
+                                continue;
+                            }
+
+                            String itemRarity = "";
+                            boolean unusual = false;
+                            for (JsonElement element : itemNames.get(itemId).get("tags").getAsJsonArray()) {
+                                JsonObject object = element.getAsJsonObject();
+                                if (object.get("category").getAsString().equals("Rarity")) {
+                                    itemRarity = object.get("internal_name").getAsString();
+                                } else if (object.get("category").getAsString().equals("Quality")) {
+                                    if (object.get("internal_name").getAsString().equals("unusual")) {
+                                        unusual = true;
+                                    }
                                 }
                             }
-                        }
-                        if (unusual && itemRarity.equals("Rarity_Ancient_Weapon")) {
-                            itemRarity = "Yellow";
-                        }
-
-                        switch (itemRarity) {
-                            case "Rarity_Rare_Weapon":
-                                itemRarity = "Blue";
-                                break;
-                            case "Rarity_Mythical_Weapon":
-                                itemRarity = "Purple";
-                                break;
-                            case "Rarity_Legendary_Weapon":
-                                itemRarity = "Pink";
-                                break;
-                            case "Rarity_Ancient_Weapon":
-                                itemRarity = "Red";
-                                break;
-                            case "Rarity_Ancient":
+                            if (unusual && itemRarity.equals("Rarity_Ancient_Weapon")) {
                                 itemRarity = "Yellow";
-                                break;
-                        }
+                            }
+
+                            switch (itemRarity) {
+                                case "Rarity_Rare_Weapon":
+                                    itemRarity = "Blue";
+                                    break;
+                                case "Rarity_Mythical_Weapon":
+                                    itemRarity = "Purple";
+                                    break;
+                                case "Rarity_Legendary_Weapon":
+                                    itemRarity = "Pink";
+                                    break;
+                                case "Rarity_Ancient_Weapon":
+                                    itemRarity = "Red";
+                                    break;
+                                case "Rarity_Ancient":
+                                    itemRarity = "Yellow";
+                                    break;
+                            }
 
 
-                        if (duplicatePreventer.contains(assetidFromItemId)) {
-                            System.out.println(itemName + " with id " + assetidFromItemId + " allready found");
-                            continue;
+                            if (duplicatePreventer.contains(assetidFromItemId)) {
+                                System.out.println(itemName + " with id " + assetidFromItemId + " allready found");
+                                continue;
+                            }
+                            duplicatePreventer.add(assetidFromItemId);
+                            rarities.putIfAbsent(itemRarity, new ArrayList<>());
+                            rarities.get(itemRarity).add(itemName);
+                            cases.computeIfAbsent(caseName, k -> new HashMap<>());
+                            logToConsoleAndFile(caseName + "->" + itemName + " (" + itemRarity + ")");
+                            cases.get(caseName).merge(itemName, 1, Integer::sum);
+                            unlockedContainers++;
                         }
-                        duplicatePreventer.add(assetidFromItemId);
-                        rarities.putIfAbsent(itemRarity, new ArrayList<>());
-                        rarities.get(itemRarity).add(itemName);
-                        cases.computeIfAbsent(caseName, k -> new HashMap<>());
-                        logToConsoleAndFile(caseName + "->" + itemName + " (" + itemRarity + ")");
-                        cases.get(caseName).merge(itemName, 1, Integer::sum);
-                        unlockedContainers++;
                     }
-                }
 
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+                logToConsoleAndFile("Dump with name " + f.getName()  + " seems to be corrupted");
             }
+
         }
 
         logToConsoleAndFile("");

@@ -39,7 +39,14 @@ public class Main {
                         startFromNow = true;
                     }
                 }
-                dumper.dumpFromTime(latestDump,startFromNow);
+                long dumpBeforeStart = 0;
+                while (dumpBeforeStart != dumper.lookForOldDumps()){
+                    System.out.println("Looking for more history entries");
+                    dumpBeforeStart = dumper.lookForOldDumps();
+                    dumper.dumpFromTime(latestDump, startFromNow);
+                }
+                System.out.println("Finished dumping");
+
                 System.out.println("You can close this now and run the execute.bat again");
                 break;
             case 2:

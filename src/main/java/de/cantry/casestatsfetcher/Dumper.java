@@ -30,6 +30,11 @@ public class Dumper {
 
     public void dumpFromTime(long startTime, boolean startFromNow) throws Exception {
 
+        File zeroDump = new File(dumpDirectory + File.separator + "0.dump");
+        if(zeroDump.exists()){
+            zeroDump.delete();
+        }
+
         long time = startTime;
         String time_frac = "0";
         String s = "0";
@@ -38,9 +43,9 @@ public class Dumper {
 
         boolean moreItems;
 
-        String base = httpGet("https://steamcommunity.com/my/inventoryhistory", cookies, true);
+        String base = httpGet("https://steamcommunity.com/my", cookies, true);
 
-        url = regexFindFirst("href=\"(https://steamcommunity.com/[^/]+/[^/]+/inventoryhistory/)\"", base);
+        url = regexFindFirst("href=\"(https://steamcommunity.com/[^/]+/[^/]+/inventory/)\"", base).replace("inventory","inventoryhistory");
         sessionid = regexFindFirst("g_sessionID = \"([^\"]+)\"", base);
 
         System.out.println("Url:" + url);
@@ -96,12 +101,6 @@ public class Dumper {
 
             Thread.sleep(2500);
         } while (moreItems);
-
-        if (fails == 10) {
-            System.out.println("Failed to dump all :(");
-        } else {
-            System.out.println("Finished dumping");
-        }
 
     }
 

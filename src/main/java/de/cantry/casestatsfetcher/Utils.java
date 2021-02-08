@@ -24,7 +24,7 @@ public class Utils {
         connection.setReadTimeout(30000);
         connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 7; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0");
         connection.setRequestProperty("Accept-Charset", "UTF-8");
-        connection.setRequestProperty("Accept-Language", "de,en-US;q=0.7,en;q=0.3");
+        connection.setRequestProperty("Accept-Language", "en-US;q=0.7,en;q=0.3");
         connection.setRequestProperty("Cookie", cookies);
         connection.setRequestMethod("GET");
         connection.setInstanceFollowRedirects(followRedirects);
