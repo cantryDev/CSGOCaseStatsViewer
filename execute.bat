@@ -1,4 +1,4 @@
-java -jar CSGOCaseStatsViewer-1.0.3-jar-with-dependencies.jar
+java -jar CSGOCaseStatsViewer.jar
 pause
 pause
 pause

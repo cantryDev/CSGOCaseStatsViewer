@@ -93,13 +93,12 @@ public class Dumper {
                     fails++;
                     System.out.println("failed " + fails + "/10 Retrying");
                     moreItems = true;
-                    Thread.sleep(10000);
+                    Thread.sleep(1000);
                 } else {
                     moreItems = false;
                 }
             }
 
-            Thread.sleep(2500);
         } while (moreItems);
 
     }
