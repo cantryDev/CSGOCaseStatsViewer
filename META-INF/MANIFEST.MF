@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Main-Class: de.cantry.casestatsfetcher.Main
+Class-Path: gson-2.8.6.jar
+
