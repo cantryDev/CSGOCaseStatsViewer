@@ -98,7 +98,7 @@ public class Dumper {
                     moreItems = false;
                 }
             }
-
+            Thread.sleep(5000);
         } while (moreItems);
 
     }
