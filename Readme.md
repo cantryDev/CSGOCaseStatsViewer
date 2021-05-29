@@ -31,20 +31,21 @@ It needs your cookies to request your <a href=https://steamcommunity.com/my/inve
 ### How do I get my cookies?
 
 #### Chrome
-
-1. Visit your steam profile.
-2. Press F12 or right click(anywhere on the website) and press inspect element. 
-3. Select the network tab
-4. Reload the page
-5. Go back to the network tab and scroll to the top and select the first entry. Click on headers. On the right side it should say Request Url: Your steam profile url
-6. Scroll down on the right side till you see Cookie:
-7. Right click on Cookie: and select copy value
+1. Login into your steam account.
+2. Visit your steam profile.
+3. Press F12 or right click(anywhere on the website) and press inspect element. 
+4. Select the network tab
+5. Reload the page
+6. Go back to the network tab and scroll to the top and select the first entry. Click on headers. On the right side it should say Request Url: Your steam profile url
+7. Scroll down on the right side till you see Cookie:
+8. Right click on Cookie: and select copy value
 
 #### Firefox
-1. Visit your steam profile.
-2. Press F12 or right click(anywhere on the website) and press inspect element.
-3. Select the network tab
-4. Reload the page
-5. Go back to the network tab and scroll to the top and select the first entry. On the right side it should say GET: Your steam profile url
-6. Scroll down on the right side till you see Cookie:
-7. Right click on Cookie: and select copy
+1. Login into your steam account.
+2. Visit your steam profile.
+3. Press F12 or right click(anywhere on the website) and press inspect element.
+4. Select the network tab
+5. Reload the page
+6. Go back to the network tab and scroll to the top and select the first entry. On the right side it should say GET: Your steam profile url
+7. Scroll down on the right side till you see Cookie:
+8. Right click on Cookie: and select copy
