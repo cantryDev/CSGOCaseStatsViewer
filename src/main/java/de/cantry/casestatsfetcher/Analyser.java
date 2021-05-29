@@ -76,7 +76,10 @@ public class Analyser {
                         String caseName = itemNames.get(caseId).get("market_hash_name").getAsString();
                         String itemName = itemNames.get(itemId).get("market_hash_name").getAsString();
                         String keyName = itemNames.get(keyId).get("market_hash_name").getAsString();
-                        if (keyName.toLowerCase().contains("case key") && caseName.toLowerCase().contains("case") && !caseName.toLowerCase().contains("key")) {
+                        if ((keyName.toLowerCase().contains("case key") || keyName.toLowerCase().contains("esport key"))
+                                && caseName.toLowerCase().contains("case")
+                                && !caseName.toLowerCase().contains("key")
+                                && !caseName.toLowerCase().contains("hardened")) {
                             String assetidFromItemId;
 
                             try {
@@ -123,7 +126,7 @@ public class Analyser {
 
 
                             if (duplicatePreventer.contains(assetidFromItemId)) {
-                                System.out.println(itemName + " with id " + assetidFromItemId + " allready found");
+                                System.out.println(itemName + " with id " + assetidFromItemId + " already found");
                                 continue;
                             }
                             duplicatePreventer.add(assetidFromItemId);

@@ -99,7 +99,7 @@ public class Dumper {
                 }
             }
 
-            Thread.sleep(2500);
+            Thread.sleep(3000);
         } while (moreItems);
 
     }
