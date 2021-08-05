@@ -5,7 +5,7 @@ import java.util.Scanner;
 public class Main {
 
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
         Scanner scanner = new Scanner(System.in);
 
@@ -18,15 +18,23 @@ public class Main {
         Dumper dumper = new Dumper();
         switch (input) {
             case 1:
-                System.out.println("Why does it need your cookies?");
-                System.out.println("It needs your cookies to request your inventory history from steamcommunity.com/my/inventoryhistory");
-                System.out.println("If you dont know how to get your cookies check https://github.com/cantryDev/CSGOCaseStatsViewer for instructions");
-                System.out.println("Please paste your cookies and press enter");
-                String cookies = scanner.nextLine();
-                if (!cookies.startsWith("Cookies:")) {
-                    cookies = "Cookies: " + cookies;
+                boolean needNewCookies = true;
+                if(dumper.areCookiesCached()) {
+                    System.out.println("Cached cookies found, load them (Y/N)");
+                    String inp = scanner.nextLine();
+                    needNewCookies = !inp.equalsIgnoreCase("y");
                 }
-                dumper.setCookies(cookies);
+                if(needNewCookies) {
+                    System.out.println("Why does it need your cookies?");
+                    System.out.println("It needs your cookies to request your inventory history from steamcommunity.com/my/inventoryhistory");
+                    System.out.println("If you dont know how to get your cookies check https://github.com/cantryDev/CSGOCaseStatsViewer for instructions");
+                    System.out.println("Please paste your cookies and press enter");
+                    String cookies = scanner.nextLine();
+                    if (!cookies.startsWith("Cookies:")) {
+                        cookies = "Cookies: " + cookies;
+                    }
+                    dumper.setAndWriteCookies(cookies);
+                }
                 long latestDump = dumper.lookForOldDumps();
                 boolean startFromNow = false;
                 if(latestDump != 99999999999L){
@@ -54,6 +62,8 @@ public class Main {
                 analyser.outPutStats(dumper.getDumpDirectory());
                 break;
         }
+
+        scanner.close();
 
 
     }
