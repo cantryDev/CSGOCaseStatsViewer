@@ -28,7 +28,7 @@ public class Analyser {
         officialOdds.put("Yellow", 0.26);
     }
 
-    public void outPutStats(File path) throws IOException {
+    public void outPutStats(File path) {
         Gson gson = new Gson();
 
         List<String> duplicatePreventer = new ArrayList<>();
@@ -198,12 +198,13 @@ public class Analyser {
         System.out.println("Saved your results to " + getCurrentResultFile().getAbsolutePath());
     }
 
-    private void logToConsoleAndFile(String msg) throws IOException {
-        if (!getCurrentResultFile().exists()) {
-            getCurrentResultFile().createNewFile();
-        }
+    private void logToConsoleAndFile(String msg) {
         System.out.println(msg);
-        Files.write(getCurrentResultFile().toPath(), (msg + System.lineSeparator()).getBytes(), StandardOpenOption.APPEND);
+        try {
+            Files.write(getCurrentResultFile().toPath(), (msg + System.lineSeparator()).getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch(IOException e) {
+            
+        }
     }
 
     private File getCurrentResultFile() {

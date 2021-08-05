@@ -1,2 +1,11 @@
 # Project exclude paths
 /target/
+/dumps/
+# VSCode/Eclipse stuff
+.settings/*
+result*
+.project
+.vscode
+launch.json
+.classpath
+cookie
