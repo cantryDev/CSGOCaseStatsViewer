@@ -22,7 +22,9 @@ public class Main {
                 if(dumper.areCookiesCached()) {
                     System.out.println("Cached cookies found, load them (Y/N)");
                     String inp = scanner.nextLine();
-                    needNewCookies = !inp.equalsIgnoreCase("y");
+                    if(inp.equalsIgnoreCase("y")) {
+                        needNewCookies = !dumper.loadCachedCookies();
+                    }
                 }
                 if(needNewCookies) {
                     System.out.println("Why does it need your cookies?");
