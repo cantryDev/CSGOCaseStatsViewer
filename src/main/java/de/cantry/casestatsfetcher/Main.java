@@ -29,7 +29,7 @@ public class Main {
                 dumper.setCookies(cookies);
                 long latestDump = dumper.lookForOldDumps();
                 boolean startFromNow = false;
-                if(latestDump != 99999999999L){
+                if (latestDump != 99999999999L) {
                     System.out.println("Older dumps found");
                     System.out.println("1. -> Continue from old dumps till it reaches the end");
                     System.out.println("2. -> Start from the beginning till it reaches the old dumps");
@@ -40,7 +40,7 @@ public class Main {
                     }
                 }
                 long dumpBeforeStart = 0;
-                while (dumpBeforeStart != dumper.lookForOldDumps()){
+                while (dumpBeforeStart != dumper.lookForOldDumps()) {
                     System.out.println("Looking for more history entries");
                     dumpBeforeStart = dumper.lookForOldDumps();
                     dumper.dumpFromTime(latestDump, startFromNow);
