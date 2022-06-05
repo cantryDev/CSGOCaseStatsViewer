@@ -98,8 +98,8 @@ public class Dumper {
                         System.out.println("Nothing found.");
                         System.out.println("Refresh via " + refreshUrl);
                         httpGet(refreshUrl,cookies,true);
-                        System.out.println("Waiting 30s");
-                        Thread.sleep(30*1000);
+                        System.out.println("Waiting 5 Minutes");
+                        Thread.sleep(5*60*1000);
                         System.out.println("Retrying");
                         moreItems = true;
                     }
