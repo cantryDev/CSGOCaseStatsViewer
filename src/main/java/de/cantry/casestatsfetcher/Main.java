@@ -11,8 +11,9 @@ public class Main {
 
         System.out.println("Menu");
         System.out.println("1. -> Dump inventory history (can take some time)");
-        System.out.println("2. -> Analyse dumped inventory history");
-        System.out.println("Type 1 or 2 and press enter.");
+        System.out.println("2. -> Analyse case unboxing history");
+        System.out.println("3. -> Analyse full CSGO history");
+        System.out.println("Type the number and press enter.");
 
         int input = Integer.parseInt(scanner.nextLine());
         Dumper dumper = new Dumper();
@@ -52,6 +53,10 @@ public class Main {
             case 2:
                 Analyser analyser = new Analyser();
                 analyser.outPutStats(dumper.getDumpDirectory());
+                break;
+            case 3:
+                AnalyserInventoryHistory inventoryHistory = new AnalyserInventoryHistory();
+                inventoryHistory.outPutStats(dumper.getDumpDirectory());
                 break;
         }
 
