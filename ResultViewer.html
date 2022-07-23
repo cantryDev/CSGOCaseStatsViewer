@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="resultdata.js"></script>
+
+</head>
+<body>
+
+<div>
+
+    <div id="chart-container"></div>
+
+    <label for="EventType">EventType:</label>
+    <select name="event" id="EventType"></select>
+    <div id="index"></div>
+    <input type="text" id="jumpTo">
+    <button id="jump">Jump To Index</button>
+    <button id="prev">-</button>
+    <button id="next">+</button>
+    <button id="dist">Show Incoming Quality Distribution</button>
+
+    <label for="constructInv">Reconstruct inventory</label>
+
+    <input type="checkbox" id="constructInv" checked>
+
+    <label for="onlycases">Only case collections</label>
+
+    <input type="checkbox" id="onlycases">
+
+    <button id="printInv">Show inventory at current index</button>
+    <details class="row" id="filters" style="display: flex">
+        <summary>Show transactions where items is one of:</summary>
+    </details>
+
+    <div id="eventContainer"></div>
+
+</div>
+
+<script type="text/javascript" src="https://fastly.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+
+<script type="text/javascript">
+     class Inventory {
+        currentRebuild;
+        lastRebuildIndex = -10;
+        events;
+        index;
+        unexpectedCounter = 0;
+        failedToRemove = 0;
+
+        constructor(events) {
+            this.events = events;
+            this.index = 0;
+            this.currentRebuild = [];
+        }
+
+        getEvents() {
+            return this.events;
+        }
+
+        setIndex(index) {
+            this.index = index;
+        }
+
+        getIndex() {
+            return this.index;
+        }
+
+        getEventFromCurrentIndex() {
+            return this.events[this.index];
+        }
+
+        getCurrentInventory() {
+            if (this.currentRebuild && this.lastRebuildIndex === this.index) {
+                return this.currentRebuild;
+            } else {
+                this.buildCurrentInventory();
+                return this.currentRebuild;
+            }
+        }
+
+        buildCurrentInventory() {
+            if (this.lastRebuildIndex === this.index - 1) {
+                this.calculateEvents(this.lastRebuildIndex, this.index);
+            } else {
+                this.calculateEvents(0, this.index);
+            }
+        }
+
+        calculateEvents(start, end) {
+            if (start === 0) {
+                this.currentRebuild = [];
+                this.unexpectedCounter = 0;
+                this.failedToRemove = 0;
+            }
+            for (let i = start; i < end; i++) {
+                let currentEvent = this.events[i];
+                let preBuild = [...this.currentRebuild];
+                let currentSize = this.currentRebuild.length;
+                let expectedSize = currentSize - Number(currentEvent.itemsRemoved ? currentEvent.itemsRemoved.length : 0) + Number(currentEvent.itemsAdded ? currentEvent.itemsAdded.length : 0);
+                if (currentEvent.itemsAdded) {
+
+                    this.currentRebuild = this.appendArray(this.currentRebuild, [...currentEvent.itemsAdded]);
+                }
+                if (currentEvent.itemsRemoved) {
+                    currentEvent.itemsRemoved.forEach(item => this.removeItemFromCurrentRebuild(item, currentEvent))
+                }
+                if (expectedSize !== this.currentRebuild.length) {
+                    console.log("Size pre event: " + currentSize);
+                    console.log("Expected: " + expectedSize);
+                    console.log("Actual: " + this.currentRebuild.length);
+                    console.log("Expected length diff");
+                    this.unexpectedCounter++;
+                }
+                if (this.currentRebuild.length === 0) {
+                    console.log(i);
+                    console.log(preBuild);
+                    console.log("Size pre event: " + currentSize);
+                    console.log(currentEvent)
+                }
+            }
+            this.lastRebuildIndex = this.index;
+            console.log(this.unexpectedCounter);
+        }
+
+        appendArray(a, b) {
+            while (b.length) a.push(b.shift());
+            return a;
+        }
+
+        removeItemFromCurrentRebuild(item, currentEvent) {
+            let itemIndex = -1;
+            let ignoreKey = false;
+
+            let itemToRemove = this.currentRebuild.find(cur => {
+                return cur.descriptionKey === item.descriptionKey
+            });
+            if (itemToRemove === undefined) {
+                itemToRemove = this.currentRebuild.find(cur => {
+                    return cur.description.instanceid === item.description.instanceid;
+                })
+                ignoreKey = true;
+            }
+
+            if (itemToRemove === undefined && item.description.market_hash_name.includes("™")) {
+
+                itemToRemove = this.currentRebuild.find(cur => {
+                    if (cur.description.market_hash_name === item.description.market_hash_name) {
+                        return cur.description.icon_url === item.description.icon_url && JSON.stringify(cur.description.tags) === JSON.stringify(item.description.tags);
+                    } else {
+                        return false;
+                    }
+                })
+                ignoreKey = true;
+            }
+
+            if (itemToRemove !== undefined) {
+                itemIndex = this.currentRebuild.indexOf(itemToRemove);
+            }
+
+            if (itemIndex > -1) {
+                let removedElement = this.currentRebuild.splice(itemIndex, 1);
+                if (!ignoreKey && removedElement[0].descriptionKey !== item.descriptionKey) {
+                    console.error("DESCRIPTIONS NOT MATCHING!!")
+                }
+            } else {
+                this.failedToRemove++;
+                console.log(item, "failed to remove");
+                console.log(this.currentRebuild);
+                console.log(currentEvent)
+            }
+        }
+
+    }
+</script>
+
+<script type="text/javascript">
+    const caseFilterPreset = {
+        ItemSet: {
+            values: [
+                "set_bravo_i",//The Bravo Collection
+                "set_community_1",//The Winter Offensive Collection
+                "set_community_2",//The Phoenix Collection
+                "set_community_3",//The Huntsman Collection
+                "set_community_4",//The Breakout Collection
+                "set_community_5",//The Vanguard Collection
+                "set_community_6",//The Chroma Collection
+                "set_community_7",//The Chroma 2 Collection
+                "set_community_8",//The Falchion Collection
+                "set_community_9",//The Shadow Collection
+                "set_community_10",//The Revolver Case Collection
+                "set_community_11",//The Wildfire Collection
+                "set_community_12",//The Chroma 3 Collection
+                "set_community_13",//The Gamma Collection
+                "set_community_15",//The Glove Collection
+                "set_community_16",//The Spectrum Collection
+                "set_community_17",//The Operation Hydra Collection
+                "set_community_18",//The Spectrum 2 Collection
+                "set_community_19",//The Clutch Collection
+                "set_community_20",//The Horizon Collection
+                "set_community_21",//The Danger Zone Collection
+                "set_community_22",//The Prisma Collection
+                "set_community_23",//The Shattered Web Collection
+                "set_community_24",//The CS20 Collection
+                "set_community_25",//The Prisma 2 Collection
+                "set_community_26",//The Fracture Collection
+                "set_community_27",//The Operation Broken Fang Collection
+                "set_community_28",//The Snakebite Collection
+                "set_community_29",//The Operation Riptide Collection
+                "set_community_30",//The Dreams & Nightmares Collection
+                "set_community_31",//The Recoil Collection
+                "set_esports",//The eSports 2013 Collection
+                "set_esports_ii",//The eSports 2013 Winter Collection
+                "set_esports_iii",//The eSports 2014 Summer Collection
+                "set_gamma_2",//The Gamma 2 Collection
+                "set_weapons_i",//The Arms Deal Collection
+                "set_weapons_ii",//The Arms Deal 2 Collection
+                "set_weapons_iii",//The Arms Deal 3 Collection
+            ]
+        }
+    }
+
+    const operationFilterPresets = {
+        ItemSet: {
+            values: [
+                "set_train",//The Train Collection
+                "set_safehouse",//The Safehouse Collection
+                "set_italy",//The Italy Collection
+                "set_lake",//The Lake Collection
+                "set_dust",//The Dust Collection
+                "set_vertigo",//The Vertigo Collection
+                "set_aztec",//The Aztec Collection
+                "set_dust_2",//The Dust 2 Collection
+                "set_mirage",//The Mirage Collection
+                "set_bank",//The Bank Collection
+                "set_overpass",//The Overpass Collection
+                "set_gods_and_monsters",//The Gods and Monsters Collection
+                "set_chopshop",//The Chop Shop Collection
+                "set_kimono",//The Rising Sun Collection
+                "set_cobblestone",//The Cobblestone Collection
+                "set_bravo_ii",//The Alpha Collection
+                "set_cache",//The Cache Collection
+                "set_baggage",//The Baggage Collection
+                "set_nuke",//The Nuke Collection
+                "set_inferno_2",//The 2018 Inferno Collection
+                "set_nuke_2",//The 2018 Nuke Collection
+                "set_blacksite",//The Blacksite Collection
+                "set_xraymachine",//The X-Ray Collection
+                "set_office",//The Office Collection
+                "set_norse",//The Norse Collection
+                "set_canals",//The Canals Collection
+                "set_stmarc",//The St. Marc Collection
+                "set_op9_characters",//Shattered Web Agents
+                "set_community_25",//The Prisma 2 Collection
+                "set_inferno",//The Inferno Collection
+                "set_community_26",//The Fracture Collection
+                "set_community_27",//The Operation Broken Fang Collection
+                "set_op10_ct",//The Control Collection
+                "set_op10_t",//The Havoc Collection
+                "set_op10_ancient",//The Ancient Collection
+                "set_community_28",//The Snakebite Collection
+                "set_community_29",//The Operation Riptide Collection
+                "set_dust_2_2021",//The 2021 Dust 2 Collection
+                "set_mirage_2021",//The 2021 Mirage Collection
+                "set_vertigo_2021",//The 2021 Vertigo Collection
+                "set_community_30",//The Dreams & Nightmares Collection
+            ]
+        }
+    }
+</script>
+
+<script type="module">
+
+    let inventory = new Inventory(data);
+
+    var dom = document.getElementById('chart-container');
+    var chart = echarts.init(dom, null, {
+        renderer: 'canvas',
+        useDirtyRect: false
+    });
+
+    let categories = [];
+    inventory.getEvents().forEach(entry => {
+        let entryKey = entry.event;
+        if (entry.event.startsWith("You traded with ")) {
+            entryKey = "You traded with";
+        }
+        if (categories[entryKey] === undefined) {
+            categories[entryKey] = [];
+        }
+        categories[entryKey].push(entry);
+    })
+
+    let transactionData = [];
+    let eventTypeOptionsElement = document.getElementById("EventType");
+    eventTypeOptionsElement.options[eventTypeOptionsElement.options.length] = new Option("All " + "(" + inventory.getEvents().length + ")", "all");
+    Object.keys(categories).forEach(key => {
+        transactionData.push({"name": key, "value": categories[key].length})
+        eventTypeOptionsElement.options[eventTypeOptionsElement.options.length] = new Option(key + "(" + categories[key].length + ")", key);
+    })
+
+    let selectedData = [];
+    let filteredData = [];
+    let filterMin = 0;
+    let filterMax = Number.MAX_VALUE;
+    let selectedChartData = [];
+    let activeFilters = {};
+    let currentIndex = 0;
+    let constructInventory = true;
+    let onlyCases = false;
+    let isRarityChart = false;
+
+    function showCurrentChart() {
+        isRarityChart = false;
+        selectedChartData = [];
+        let firstTime = +new Date(filteredData[0].time).setUTCHours(0, 0, 0, 0);
+        let perDay = [];
+        for (let i = 0; i < filteredData.length; i++) {
+            let curr = filteredData[i];
+
+            let days = Math.floor((curr.time - firstTime) / (60 * 60 * 24));
+            if (perDay[days] === undefined) {
+                perDay[days] = 0;
+            }
+            perDay[days]++;
+        }
+        for (const perDayKey in perDay) {
+            selectedChartData.push([(firstTime + 60 * 60 * 24 * perDayKey), perDay[perDayKey]])
+        }
+
+        chart.setOption({
+            title: {
+                text: 'Transactions over time for Event: ' + eventTypeOptionsElement.value
+            },
+            tooltip: {
+                formatter: function (params) {
+                    return params.data[1] + " x " + eventTypeOptionsElement.value + " at " + unixToReadable(params.data[0]);
+                }
+            },
+            xAxis: {
+                min: function (value) {
+                    return selectedChartData[0][0] - 60 * 60 * 24 * 7;
+                },
+                max: function (value) {
+                    return selectedChartData[selectedChartData.length - 1][0] + 60 * 60 * 24 * 7;
+                },
+                axisLabel: {
+                    formatter: (function (value) {
+                        return unixToReadable(value)
+                    })
+                }
+            },
+            yAxis: {
+                type: 'value',
+            },
+            series: [
+                {
+                    type: 'bar',
+                    data: selectedChartData
+                }
+            ],
+            dataZoom: [
+                {
+                    type: 'slider'
+                },
+                {
+                    type: 'inside'
+                },
+                {
+                    labelFormatter: function (dataIndex) {
+                        return unixToReadable(dataIndex);
+                    }
+                }
+            ],
+        }, true);
+    }
+
+
+    eventTypeOptionsElement.onchange = () => {
+        if (eventTypeOptionsElement.value === "all") {
+            selectedData = inventory.getEvents();
+        } else {
+            selectedData = categories[eventTypeOptionsElement.value];
+        }
+        filteredData = [...selectedData];
+        currentIndex = 0;
+        showCurrentChart();
+        showCurrentEvent();
+        showFilterForAvailableItems();
+    };
+    eventTypeOptionsElement.value = "all";
+    setTimeout(() => eventTypeOptionsElement.onchange(), 1000);
+
+    document.getElementById("prev").onclick = () => {
+        if (currentIndex > 0) {
+            currentIndex--;
+            showCurrentEvent();
+        }
+    }
+
+    document.getElementById("next").onclick = () => {
+        if (currentIndex < filteredData.length) {
+            currentIndex++;
+            showCurrentEvent();
+        }
+    }
+
+    document.getElementById("jump").onclick = () => {
+        let newIndex = document.getElementById("jumpTo").value;
+        if (newIndex >= 0 && newIndex < selectedData.length) {
+            currentIndex = newIndex;
+            showCurrentEvent();
+        }
+    }
+
+    document.getElementById("dist").onclick = () => {
+        showRarityDistribution();
+    }
+
+    document.getElementById("printInv").onclick = () => {
+        let invDiv = document.createElement("div");
+        invDiv.style.width = "100vw";
+        invDiv.style.textAlign = "center";
+        invDiv.style.backgroundColor = "white";
+        invDiv.id = "itemHolder"
+        invDiv.onclick = () => {
+            document.getElementById("itemHolder").remove();
+        }
+        let title = document.createElement("div");
+        title.innerText = "Inventory at " + unixToReadable(inventory.getEventFromCurrentIndex().time) + " amount: " + inventory.getCurrentInventory().length;
+        invDiv.append(title);
+        inventory.getCurrentInventory().forEach(item => {
+            let sameItem = invDiv.getElementsByClassName(item.description.market_hash_name)[0];
+            if (sameItem === undefined) {
+                sameItem = document.createElement("div");
+                sameItem.className = item.description.market_hash_name;
+                sameItem.count = 0;
+
+                let rarity = item.description.tags.filter(tag => {
+                    return tag.category === "Rarity" && tag.category_name === "Quality";
+                })[0];
+                if (rarity !== undefined) {
+                    sameItem.style.color = rarity.color ? '#' + rarity.color : '';
+                }
+                invDiv.append(sameItem);
+            }
+            sameItem.count = sameItem.count + 1;
+            sameItem.innerText = item.description.market_hash_name + " (" + sameItem.count + ")";
+        })
+        document.body.append(invDiv);
+    }
+
+    document.getElementById("constructInv").onclick = () => {
+        constructInventory = !constructInventory;
+    };
+
+    document.getElementById("onlycases").onclick = () => {
+        onlyCases = !onlyCases;
+        if (onlyCases) {
+            activeFilters = {...caseFilterPreset};
+        } else {
+            delete activeFilters.ItemSet;
+        }
+        document.getElementById("filters").innerHTML = "";
+        showFilterForAvailableItems();
+        filteredData = filterItems(selectedData, activeFilters);
+        showCurrentEvent();
+        showCurrentChart();
+    };
+
+    showCurrentEvent();
+
+    let distribution = [];
+    let distributionAmount = 0;
+
+    function showRarityDistribution() {
+        isRarityChart = true;
+        distributionAmount = 0;
+        distribution = [];
+        filteredData.forEach(currentEvent => {
+            if (currentEvent.itemsAdded) {
+                currentEvent.itemsAdded.forEach(item => {
+                    distributionAmount++;
+                    let rarity = item.description.tags.filter(tag => {
+                        return tag.category === "Rarity" && tag.category_name === "Quality";
+                    })[0];
+                    if (rarity !== undefined) {
+                        if (distribution[rarity.name] === undefined) {
+                            distribution[rarity.name] = {count: 0, color: rarity.color ? '#' + rarity.color : ''};
+                        }
+                        distribution[rarity.name].count++;
+                    }
+                })
+            }
+        })
+        let chartData = [];
+        let total = 0;
+        Object.keys(distribution).forEach(key => {
+            chartData.push({
+                "name": key,
+                "value": distribution[key].count,
+                "itemStyle": {"normal": {"color": distribution[key].color}},
+            });
+            total += distribution[key].count;
+        });
+        var option = {
+            title: {
+                text: 'Rarity distribution',
+                subtext: 'For incoming items',
+                left: 'center'
+            },
+            tooltip: {
+                formatter: '{c}/' + total + '({d}%)',
+                trigger: 'item'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left'
+            },
+            itemStyle: {
+                color: index => distribution[index].color
+            },
+            series: [
+                {
+                    name: 'Rarity',
+                    type: 'pie',
+                    radius: '50%',
+                    data: chartData,
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+        };
+
+        if (option && typeof option === 'object') {
+            chart.setOption(option, true);
+        }
+    }
+
+    function showCurrentEvent() {
+        document.getElementById("index").innerText = (Number(currentIndex) + 1) + "/" + filteredData.length
+        let currentEvent = filteredData[currentIndex];
+        if (currentEvent === undefined) {
+            return;
+        }
+
+        if (constructInventory) {
+            inventory.setIndex(currentIndex);
+        }
+        let container = document.getElementById("eventContainer")
+        container.innerHTML = "";
+        let title = document.createElement("div");
+        title.innerText = currentEvent.event;
+        container.append(title);
+        let time = document.createElement("div");
+        time.innerText = unixToReadable(currentEvent.time);
+        container.append(time);
+
+        let added = document.createElement("div");
+        added.innerText = "Received:"
+
+
+        let removed = document.createElement("div");
+        removed.innerText = "Removed:"
+
+
+        if (currentEvent.itemsAdded) {
+            currentEvent.itemsAdded.forEach(item => {
+                let curr = document.createElement("div");
+                curr.innerText = item.description.market_name;
+                let rarity = item.description.tags.filter(tag => {
+                    return tag.category === "Rarity" && tag.category_name === "Quality";
+                })[0];
+                if (rarity !== undefined) {
+                    curr.style.color = "#" + rarity.color;
+                }
+                added.append(curr);
+            })
+            container.append(added);
+        }
+
+        if (currentEvent.itemsRemoved) {
+            currentEvent.itemsRemoved.forEach(item => {
+                let curr = document.createElement("div");
+                curr.innerText = item.description.market_name;
+                let rarity = item.description.tags.filter(tag => {
+                    return tag.category === "Rarity" && tag.category_name === "Quality";
+                })[0];
+                if (rarity !== undefined) {
+                    curr.style.color = "#" + rarity.color;
+                }
+                removed.append(curr);
+            })
+            container.append(removed);
+        }
+    }
+
+    function unixToReadable(timestamp) {
+        var a = new Date(timestamp * 1000);
+        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        var year = a.getFullYear();
+        var month = months[a.getMonth()];
+        var date = a.getDate();
+        var time = date + ' ' + month + ' ' + year;
+        return time;
+    }
+
+    function showFilterForAvailableItems() {
+        let allTags = [];
+        let category = document.getElementById("filters");
+        if (category !== null) {
+            category.innerHTML = "";
+            let filter = document.createElement("summary")
+            filter.innerText = "Show transactions where items is one of:";
+            category.appendChild(filter);
+        }
+        selectedData.forEach(entry => {
+            if (entry.itemsAdded)
+                allTags = allTags.concat(entry.itemsAdded.map(i => i.description.tags)[0]);
+            if (entry.itemsRemoved)
+                allTags = allTags.concat(entry.itemsRemoved.map(i => i.description.tags)[0]);
+        });
+        allTags.forEach(tag => {
+            if (!tag) {
+                return;
+            }
+            let category = document.getElementById(tag.category);
+            if (category === null) {
+                category = document.createElement("details");
+                category.id = tag.category;
+                category.style.border = "solid grey";
+                category.classList.add("column");
+                let sum = document.createElement("summary")
+                sum.innerText = tag.category_name;
+                document.getElementById("filters").append(category);
+                category.append(sum)
+            }
+
+            let categoryEntry = document.getElementById(tag.internal_name);
+            if (categoryEntry === null) {
+
+                var categoryEntryLabel = document.createElement('label')
+                categoryEntryLabel.htmlFor = tag.internal_name;
+                categoryEntryLabel.appendChild(document.createTextNode(tag.name));
+
+                categoryEntry = document.createElement("input");
+                categoryEntry.type = "checkbox";
+                categoryEntry.id = tag.internal_name;
+                categoryEntry.category = tag.category;
+                categoryEntry.value = tag.name + " (" + 1 + ")";
+                categoryEntry.style.color = tag.color ? "#" + tag.color : "";
+                categoryEntry.onchange = (event) => {
+                    let category = event.target.category;
+                    let entry = event.target.id;
+                    if (activeFilters[category]) {
+                        let index = activeFilters[category].values.indexOf(entry);
+                        if (index === -1) {
+                            activeFilters[category].values.push(entry);
+                        } else {
+                            activeFilters[category].values = activeFilters[category].values.filter(item => item !== entry);
+                            if (activeFilters[category].values.length === 0) {
+                                delete activeFilters[category];
+                            }
+                        }
+                    } else {
+                        activeFilters[category] = {values: []};
+                        activeFilters[category].values.push(entry);
+                    }
+                    filteredData = filterItems(selectedData, activeFilters);
+                    currentIndex = 0;
+                    showCurrentEvent();
+                    if (isRarityChart) {
+                        showRarityDistribution();
+                    } else {
+                        showCurrentChart();
+                    }
+                };
+                category.append(categoryEntry);
+                category.append(categoryEntryLabel);
+                category.append(document.createElement("br"));
+            }
+        });
+    }
+
+
+    let refilter;
+
+    function filterItems(data, filters) {
+        if (Object.keys(filters).length === 0) {
+            return data;
+        }
+        Object.values(filters).forEach(filter => {
+            filter.values.forEach(id => {
+                let element = document.getElementById(id);
+                if(element){
+                    element.checked = true;
+                }
+            })
+
+        })
+        let filtered = data.filter(entry => {
+            if (entry.time < filterMin) {
+                return false;
+            }
+            if (entry.time > filterMax) {
+                return false;
+            }
+            if (entry.itemsAdded) {
+                let filteredAdded = entry.itemsAdded.some(item => item.description.tags.some(tag => {
+                    if (filters[tag.category]) {
+                        return filters[tag.category].values.some(a => a === tag.internal_name);
+                    }
+                    return false;
+                }));
+                if (filteredAdded) {
+                    return true;
+                }
+            }
+            if (entry.itemsRemoved) {
+                let filteredRemoved = entry.itemsRemoved.some(item => item.description.tags.some(tag => {
+                    if (filters[tag.category]) {
+                        return filters[tag.category].values.some(a => a === tag.internal_name);
+                    }
+                    return false;
+                }));
+                if (filteredRemoved) {
+                    return true;
+                }
+            }
+        })
+        return filtered;
+    }
+
+    window.addEventListener('resize', chart.resize);
+    setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+    }, 500);
+
+</script>
+
+</body>
+
+<style>
+    #chart-container {
+        position: relative;
+        height: 50vh;
+        overflow: hidden;
+    }
+
+</style>
+</html>

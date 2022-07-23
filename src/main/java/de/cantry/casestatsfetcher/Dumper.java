@@ -7,14 +7,17 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static de.cantry.casestatsfetcher.Utils.httpGet;
-import static de.cantry.casestatsfetcher.Utils.regexFindFirst;
+import static de.cantry.casestatsfetcher.Utils.*;
 
 public class Dumper {
 
@@ -23,6 +26,7 @@ public class Dumper {
     private String url;
     private int fails = 0;
     private List<Long> allDumpTimeStamps = new ArrayList<>();
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("d MMM, yyyy h:mma", Locale.ENGLISH);
 
     public void setCookies(String cookies) {
         this.cookies = cookies;
@@ -31,7 +35,7 @@ public class Dumper {
     public void dumpFromTime(long startTime, boolean startFromNow) throws Exception {
 
         File zeroDump = new File(dumpDirectory + File.separator + "0.dump");
-        if(zeroDump.exists()){
+        if (zeroDump.exists()) {
             zeroDump.delete();
         }
 
@@ -45,7 +49,7 @@ public class Dumper {
 
         String base = httpGet("https://steamcommunity.com/my", cookies, true);
 
-        url = regexFindFirst("href=\"(https://steamcommunity.com/[^/]+/[^/]+/inventory/)\"", base).replace("inventory","inventoryhistory");
+        url = regexFindFirst("href=\"(https://steamcommunity.com/[^/]+/[^/]+/inventory/)\"", base).replace("inventory", "inventoryhistory");
         sessionid = regexFindFirst("g_sessionID = \"([^\"]+)\"", base);
 
         System.out.println("Url:" + url);
@@ -64,18 +68,41 @@ public class Dumper {
             try {
                 JsonObject element = gson.fromJson(res, JsonObject.class);
 
-                moreItems = element.get("num").getAsString().equals("50");
+                moreItems = !element.get("num").getAsString().equals("0");
+                String currentDate;
+                try {
+                    currentDate = regexFindFirst("tradehistory_date\\\\\">([^<]+)<", res).replace("\\t", "").replace("\\r", "").replace("\\n", "");
+                } catch (Exception e) {
+                    currentDate = "No date found";
+                }
 
-                String currentDate = regexFindFirst("tradehistory_date\\\\\">([^<]+)<", res).replace("\\t", "").replace("\\r", "").replace("\\n", "");
-
-                if (moreItems && element.get("cursor") != null) {
+                if (element.get("cursor") != null) {
                     JsonObject cursor = element.get("cursor").getAsJsonObject();
                     s = cursor.get("s").getAsString();
                     time_frac = cursor.get("time_frac").getAsString();
                     time = cursor.get("time").getAsLong();
                     fails = 0;
                 } else {
-                    time = 0;
+                    System.out.println("NO CURSOR FOUND");
+                    System.out.println("URL:" + getUrl);
+                    List<String> dates = regexFindAll("tradehistory_date\\\\\">([^<]+)<", res);
+                    List<String> times = regexFindAll("tradehistory_timestamp\\\\\">([^<]+)<", res);
+                    if (dates.size() == times.size() && dates.size() != 0) {
+                        String oldestDate = (dates.get(dates.size() - 1) + " " + times.get(times.size() - 1).toUpperCase()).replace("\\t", "").replace("\\r", "").replace("\\n", "");
+                        ZonedDateTime dateTime = ZonedDateTime.parse(oldestDate, dateTimeFormatter.withZone(ZoneId.of("UTC")));
+                        time = dateTime.toInstant().getEpochSecond();
+                        System.out.println("Converting date to timestamp");
+                        System.out.println(oldestDate + "->" + time);
+                    }else {
+                        String refreshUrl = "https://steamcommunity.com/my/inventoryhistory/?app%5B%5D=730&start_time=" + time;
+                        System.out.println("Nothing found.");
+                        System.out.println("Refresh via " + refreshUrl);
+                        httpGet(refreshUrl,cookies,true);
+                        System.out.println("Waiting 5 Minutes");
+                        Thread.sleep(5*60*1000);
+                        System.out.println("Retrying");
+                        moreItems = true;
+                    }
                 }
 
                 File dumpFile = new File(dumpDirectory.getAbsolutePath() + File.separator + time + ".dump");
