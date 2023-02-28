@@ -28,6 +28,9 @@ Just restart it. It will continue where it crashed.
 ### Why does it need my cookies?
 It needs your cookies to request your <a href=https://steamcommunity.com/my/inventoryhistory>inventory history</a>
 
+### Analysis not working?
+Make sure to dump the history first.
+
 ### How do I get my cookies?
 
 #### Chrome
