@@ -10,7 +10,7 @@ After the inventory history is dumped it will search for every unboxed case.
 
 1. Download the latest compiled version as zip via the <a href=https://github.com/cantryDev/CSGOCaseStatsViewer/releases/latest>latest release tab</a> or compile it yourself with maven.
 2. Execute the execute.bat 
-3. Follow the steps in the commandline which just got opened
+3. Follow the steps in the commandline which just got opened (dump your inventory history first)
 4. Get disappointed.
 
 ## Example result
