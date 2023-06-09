@@ -40,7 +40,14 @@ public class Analyser {
 
         logToConsoleAndFile("Sorted by time");
 
-        for (File f : Objects.requireNonNull(path.listFiles())) {
+        File[] files = path.listFiles();
+
+        if (files == null || files.length == 0) {
+            logToConsoleAndFile("No dumps found. You have to dump your history first");
+            return;
+        }
+
+        for (File f : files) {
             //Not pretty but better then nullchecking every field
             try{
                 JsonObject obj = gson.fromJson(String.join("", Files.readAllLines(f.toPath())), JsonObject.class);

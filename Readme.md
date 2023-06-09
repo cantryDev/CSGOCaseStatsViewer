@@ -9,9 +9,10 @@ After the inventory history is dumped it will search for every unboxed case.
 ## Usage
 
 1. Download the latest compiled version as zip via the <a href=https://github.com/cantryDev/CSGOCaseStatsViewer/releases/latest>latest release tab</a> or compile it yourself with maven.
-2. Execute the execute.bat 
-3. Follow the steps in the commandline which just got opened
-4. Get disappointed.
+2. Unzip the downloaded zip
+3. Execute the execute.bat 
+4. Follow the steps in the commandline which just got opened
+5. Get disappointed.
 
 ## Example result
 
@@ -41,7 +42,7 @@ Make sure to dump the history first.
 5. Reload the page
 6. Go back to the network tab and scroll to the top and select the first entry. Click on headers. On the right side it should say Request Url: Your steam profile url
 7. Scroll down on the right side till you see Cookie:
-8. Right click on Cookie: and select copy value
+8. Right click on Cookie: and select copy value. Or copy it manual.
 
 #### Firefox
 1. Login into your steam account.
