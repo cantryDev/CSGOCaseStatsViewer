@@ -1,5 +1,8 @@
 # CS:GO case stats viewer
 
+## DEPRECATED & ARCHIVED
+Check out the rework at https://github.com/cantryDev/CSGOCaseStatsViewerV2
+
 ## How does it work?
 
 This Java Application loads your whole CS:GO <a href=https://steamcommunity.com/my/inventoryhistory>inventory history</a> by emulating the load more history button.
